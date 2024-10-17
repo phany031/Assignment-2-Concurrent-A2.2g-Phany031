@@ -3,6 +3,7 @@ package nuber.students;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The core Dispatch class that instantiates and manages everything for Nuber
@@ -20,6 +21,8 @@ public class NuberDispatch {
 	private boolean logEvents = false;
 	
 	private final ConcurrentLinkedQueue<Driver> availableDrivers; // Thread-safe driver pool
+	private final AtomicInteger bookingsAwaitingDriver = new AtomicInteger(0); // Tracks how many bookings are awaiting drivers
+
 
 	
 	/**
@@ -61,6 +64,17 @@ public class NuberDispatch {
 	 */
 	public Driver getDriver()
 	{
+		Driver driver = availableDrivers.poll();
+		try {
+			if (driver != null) {
+				bookingsAwaitingDriver.decrementAndGet();
+			}
+			return driver;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
 	}
 
 	/**
