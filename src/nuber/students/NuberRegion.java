@@ -1,6 +1,7 @@
 package nuber.students;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 
 /**
  * A single Nuber region that operates independently of other regions, other than getting 
@@ -17,8 +18,21 @@ import java.util.concurrent.Future;
  *
  */
 public class NuberRegion {
+    private final NuberDispatch dispatch;
+    private final String regionName;
+    
+    // Maximum number of simultaneous jobs allowed in this region
+    private final int maxSimultaneousJobs;
+    
+    // ExecutorService to manage concurrent bookings
+    private final ExecutorService executorService;
+    
+    // Queue to store active bookings
+    private final ConcurrentLinkedQueue<Future<BookingResult>> activeBookings;
+    
+    // Flag to indicate if the region is shutting down
+    private volatile boolean isShutdown = false;
 
-	
 	/**
 	 * Creates a new Nuber region
 	 * 
@@ -28,8 +42,13 @@ public class NuberRegion {
 	 */
 	public NuberRegion(NuberDispatch dispatch, String regionName, int maxSimultaneousJobs)
 	{
-		
-
+		this.dispatch = dispatch;
+        this.regionName = regionName;
+        this.maxSimultaneousJobs = maxSimultaneousJobs;
+        
+        // Create a fixed thread pool with size equal to maxSimultaneousJobs
+        this.executorService = Executors.newFixedThreadPool(maxSimultaneousJobs);
+        this.activeBookings = new ConcurrentLinkedQueue<>();
 	}
 	
 	/**
