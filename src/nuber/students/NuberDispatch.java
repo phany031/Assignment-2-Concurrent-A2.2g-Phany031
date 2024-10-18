@@ -20,9 +20,14 @@ public class NuberDispatch {
 	
 	private boolean logEvents = false;
 	
-	private final ConcurrentLinkedQueue<Driver> availableDrivers; // Thread-safe driver pool
-	private final AtomicInteger bookingsAwaitingDriver = new AtomicInteger(0); // Tracks how many bookings are awaiting drivers
+	 // Thread-safe queue to store available drivers
+	private final ConcurrentLinkedQueue<Driver> availableDrivers; 
+	
+	// Tracks how many bookings are awaiting drivers
+	private final AtomicInteger bookingsAwaitingDriver = new AtomicInteger(0); 
 
+	// Map to store different regions
+    private final HashMap<String, NuberRegion> regions;
 
 	
 	/**
@@ -34,6 +39,21 @@ public class NuberDispatch {
 	 */
 	public NuberDispatch(HashMap<String, Integer> regionInfo, boolean logEvents)
 	{
+		 this.logEvents = logEvents;
+	        this.availableDrivers = new ConcurrentLinkedQueue<>();
+	        this.regions = new HashMap<>();
+
+	        System.out.println("Creating Nuber Dispatch");
+	        System.out.println("Creating " + regionInfo.size() + " regions");
+
+	        // Create NuberRegion objects for each region
+	        for (String regionName : regionInfo.keySet()) {
+	            int maxSimultaneousBookings = regionInfo.get(regionName);
+	            System.out.println("Creating Nuber region for " + regionName);
+	            regions.put(regionName, new NuberRegion(this, regionName, maxSimultaneousBookings));
+	        }
+
+	        System.out.println("Done creating " + regionInfo.size() + " regions");
 	}
 	
 	/**
@@ -105,7 +125,14 @@ public class NuberDispatch {
 	 * @return returns a Future<BookingResult> object
 	 */
 	public Future<BookingResult> bookPassenger(Passenger passenger, String region) {
+		NuberRegion nuberRegion = regions.get(region);
+        if (nuberRegion != null) {
+            bookingsAwaitingDriver.incrementAndGet();
+            return nuberRegion.bookPassenger(passenger);
+        }
+        return null;
 	}
+	
 
 	/**
 	 * Gets the number of non-completed bookings that are awaiting a driver from dispatch
@@ -116,12 +143,16 @@ public class NuberDispatch {
 	 */
 	public int getBookingsAwaitingDriver()
 	{
+		 return bookingsAwaitingDriver.get();
 	}
 	
 	/**
 	 * Tells all regions to finish existing bookings already allocated, and stop accepting new bookings
 	 */
 	public void shutdown() {
+		 for (NuberRegion region : regions.values()) {
+	            region.shutdown();
+	        }
 	}
 
 }
