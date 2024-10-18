@@ -64,7 +64,20 @@ public class NuberRegion {
 	 */
 	public Future<BookingResult> bookPassenger(Passenger waitingPassenger)
 	{		
-		
+		 if (isShutdown) {
+	            System.out.println("Booking rejected: " + waitingPassenger.name);
+	            return null;
+	        }
+		 
+		// Create a new booking
+	        Booking booking = new Booking(dispatch, waitingPassenger);
+	        dispatch.logEvent(booking, "Creating booking");
+
+	        // Submit the booking to the executor service
+	        Future<BookingResult> future = executorService.submit(booking);
+	        activeBookings.offer(future);
+
+	        return future;
 	}
 	
 	/**
