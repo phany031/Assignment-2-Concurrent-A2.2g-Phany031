@@ -1,6 +1,6 @@
 package nuber.students;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,6 +34,7 @@ public class Booking implements Callable<BookingResult> {
 	private final NuberDispatch dispatch;
 	private final Passenger passenger;
 	private Driver driver;
+	private final long startTime;
 
 	/**
 	 * Creates a new booking for a given Nuber dispatch and passenger, noting that
@@ -47,6 +48,7 @@ public class Booking implements Callable<BookingResult> {
 		this.id = NEXT_ID.incrementAndGet();
         this.dispatch = dispatch;
         this.passenger = passenger;
+        this.startTime = new Date().getTime();
 	}
 
 	/**
@@ -63,13 +65,35 @@ public class Booking implements Callable<BookingResult> {
 	 * with the thread pausing whilst as function is called. 
 	 * 5. Once at the
 	 * destination, the time is recorded, so we know the total trip duration. 
-	 * 6. The driver, now free, is added back into Dispatch�s list of available drivers. 7.
-	 * The call() function the returns a BookingResult object, passing in the
+	 * 6. The driver, now free, is added back into Dispatch�s list of available drivers. 
+	 * 7. The call() function the returns a BookingResult object, passing in the
 	 * appropriate information required in the BookingResult constructor.
 	 *
 	 * @return A BookingResult containing the final information about the booking
 	 */
-	public BookingResult call() {
+	public BookingResult call() throws InterruptedException {
+		// Get a driver
+        dispatch.logEvent(this, "Starting booking, getting driver");
+        driver = dispatch.getDriver();
+        
+        // Pick up the passenger
+        dispatch.logEvent(this, "Starting, on way to passenger");
+        driver.pickUpPassenger(passenger);
+        
+        // Drive to the destination
+        dispatch.logEvent(this, "Collected passenger, on way to destination");
+        driver.driveToDestination();
+        
+        // Calculate trip duration
+        long endTime = new Date().getTime();
+        long tripDuration = endTime - startTime;
+        
+        // Return the driver to the available pool
+        dispatch.logEvent(this, "At destination, driver is now free");
+        dispatch.addDriver(driver);
+        
+        // Return the booking result
+        return new BookingResult(id, passenger, driver, tripDuration);
 
 	}
 
