@@ -85,6 +85,8 @@ public class NuberRegion {
 	 */
 	public void shutdown()
 	{
+		isShutdown = true;
+        executorService.shutdown();
 	}
 		
 }
