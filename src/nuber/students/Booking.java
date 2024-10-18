@@ -30,7 +30,7 @@ public class Booking implements Callable<BookingResult> {
 	// Static counter for generating unique booking IDs
 	private static final AtomicInteger NEXT_ID = new AtomicInteger(0);
 
-	private final int id;
+	private final int jobID;
 	private final NuberDispatch dispatch;
 	private final Passenger passenger;
 	private Driver driver;
@@ -45,7 +45,7 @@ public class Booking implements Callable<BookingResult> {
 	 * @param passenger
 	 */
 	public Booking(NuberDispatch dispatch, Passenger passenger) {
-		this.id = NEXT_ID.incrementAndGet();
+		this.jobID = NEXT_ID.incrementAndGet();
         this.dispatch = dispatch;
         this.passenger = passenger;
         this.startTime = new Date().getTime();
@@ -93,7 +93,7 @@ public class Booking implements Callable<BookingResult> {
         dispatch.addDriver(driver);
         
         // Return the booking result
-        return new BookingResult(id, passenger, driver, tripDuration);
+        return new BookingResult(jobID, passenger, driver, tripDuration);
 
 	}
 
@@ -107,6 +107,7 @@ public class Booking implements Callable<BookingResult> {
 	 */
 	@Override
 	public String toString() {
+		 return jobID + ":" + (driver == null ? "null" : driver.name) + ":" + passenger.name;
 	}
 
 }
