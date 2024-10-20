@@ -19,11 +19,6 @@ import java.util.concurrent.*;
  */
 public class NuberRegion {
     private final NuberDispatch dispatch;
-    private final String regionName;
-    
-    // Maximum number of simultaneous jobs allowed in this region
-    private final int maxSimultaneousJobs;
-    
     // ExecutorService to manage concurrent bookings
     private final ExecutorService executorService;
     
@@ -43,9 +38,6 @@ public class NuberRegion {
 	public NuberRegion(NuberDispatch dispatch, String regionName, int maxSimultaneousJobs)
 	{
 		this.dispatch = dispatch;
-        this.regionName = regionName;
-        this.maxSimultaneousJobs = maxSimultaneousJobs;
-        
         // Create a fixed thread pool with size equal to maxSimultaneousJobs
         this.executorService = Executors.newFixedThreadPool(maxSimultaneousJobs);
         this.activeBookings = new ConcurrentLinkedQueue<>();

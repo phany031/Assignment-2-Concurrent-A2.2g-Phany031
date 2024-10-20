@@ -27,10 +27,7 @@ public class NuberDispatch {
 	// Count of pending bookings
 	private int pendingBookings; 
 	
-	 // Incremental ID for each booking
-	private int bookingID;
-
-	// Map to store different regions
+	 // Map to store different regions
 	private final HashMap<String, NuberRegion> regions;
 
 	/**
@@ -46,8 +43,7 @@ public class NuberDispatch {
 		this.logEvents = logEvents;
 		this.driverQueue = new ArrayBlockingQueue<>(MAX_DRIVERS);
 		this.pendingBookings = 0;
-        this.bookingID = 1;
-		this.regions = new HashMap<>();
+        this.regions = new HashMap<>();
 
 		System.out.println("Creating Nuber Dispatch");
 		System.out.println("Creating " + regionInfo.size() + " regions");
@@ -139,7 +135,6 @@ public class NuberDispatch {
 	        Future<BookingResult> result = nuberRegion.bookPassenger(passenger);
 	        if (result != null) {
 	            pendingBookings++;  // Increment pending bookings if successfully booked
-	            bookingID++;  // Generate a new booking ID
 	        }
 
 	        return result;
