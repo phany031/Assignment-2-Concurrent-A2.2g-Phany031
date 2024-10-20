@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -25,7 +26,7 @@ public class NuberDispatch {
 	private final BlockingQueue<Driver> driverQueue;
 
 	// Count of pending bookings
-	private int pendingBookings; 
+	private final AtomicInteger pendingBookings = new AtomicInteger(0);
 	
 	 // Map to store different regions
 	private final HashMap<String, NuberRegion> regions;
@@ -42,7 +43,6 @@ public class NuberDispatch {
 	public NuberDispatch(HashMap<String, Integer> regionInfo, boolean logEvents) {
 		this.logEvents = logEvents;
 		this.driverQueue = new ArrayBlockingQueue<>(MAX_DRIVERS);
-		this.pendingBookings = 0;
         this.regions = new HashMap<>();
 
 		System.out.println("Creating Nuber Dispatch");
@@ -87,7 +87,7 @@ public class NuberDispatch {
 	public Driver getDriver() {
 		 try {
 	            Driver driver = driverQueue.take();  // Block until a driver is available
-	            pendingBookings--;  // Decrement pending bookings as driver is assigned
+	            pendingBookings.decrementAndGet();  // Decrement pending bookings as driver is assigned
 	            return driver;
 	        } catch (InterruptedException e) {
 	            System.err.println("Failed to retrieve a driver.");
@@ -127,14 +127,14 @@ public class NuberDispatch {
 	 */
 	public Future<BookingResult> bookPassenger(Passenger passenger, String region) {
 		NuberRegion nuberRegion = regions.get(region);
-		 if (region == null) {
+		 if (nuberRegion == null) {
 	            System.err.println("Invalid region: " + region);
 	            return null;
 	        }
 
 	        Future<BookingResult> result = nuberRegion.bookPassenger(passenger);
 	        if (result != null) {
-	            pendingBookings++;  // Increment pending bookings if successfully booked
+	        	pendingBookings.incrementAndGet();  // Increment pending bookings if successfully booked
 	        }
 
 	        return result;
@@ -150,7 +150,7 @@ public class NuberDispatch {
 	 * @return Number of bookings awaiting driver, across ALL regions
 	 */
 	public int getBookingsAwaitingDriver() {
-		return pendingBookings;
+		return pendingBookings.get();
 	}
 
 	/**
